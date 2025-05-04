@@ -1,0 +1,37 @@
+name: 'Evaluate trained model on boxoban'
+cmd: 'evaluate'
+env:
+  name: boxoban
+  n_max_episode_steps: 200
+  # levels: /home/excellent/ds/others/boxoban-levels/medium/valid
+  # levels: /home/excellent/ds/others/boxoban-levels/hard
+  # levels: /home/excellent/ds/others/boxoban-levels/unfiltered/train
+  # levels: /home/excellent/ds/others/boxoban-levels/unfiltered/valid
+  # levels: /home/excellent/ds/others/boxoban-levels/unfiltered/test
+  # levels: /home/excellent/ds/others/boxoban-levels/unfiltered/valid
+  levels: /home/excellent/ds/others/boxoban-levels/unfiltered/valid/000.txt
+infra:
+  sub_processes_cnt: 1
+  threads_cnt: 10
+  device: gpu
+  log: mem
+evaluate:
+  n_games_to_solve: 100
+  mem_max_episodes: 100000
+  towards_or_away: 'towards'   # towards|away|both
+  policy_name: 'last'
+  targets: all_possible
+  method: one_shot
+
+model:
+  PLTA:
+    class: Sokoban_PLTA_v4_1010
+    learning_rate: 0.003
+    weight_decay: 0
+    batch_size: 128
+  PLHW:
+    class: Sokoban_PLHW_v4_1010
+    learning_rate: 0.003
+    weight_decay: 0
+    batch_size: 128
+  checkpoint: 'trained_models/boxoban_vast_v4_20250421-073320__repacked.ckpt' 
