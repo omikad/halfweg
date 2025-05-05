@@ -1,6 +1,7 @@
 name: 'Evaluate trained model on boxoban'
 cmd: 'evaluate'
 env:
+  #### Download levels from: https://github.com/google-deepmind/boxoban-levels
   name: boxoban
   n_max_episode_steps: 200
   # levels: /home/excellent/ds/others/boxoban-levels/medium/valid
@@ -8,19 +9,21 @@ env:
   # levels: /home/excellent/ds/others/boxoban-levels/unfiltered/train
   # levels: /home/excellent/ds/others/boxoban-levels/unfiltered/valid
   # levels: /home/excellent/ds/others/boxoban-levels/unfiltered/test
-  # levels: /home/excellent/ds/others/boxoban-levels/unfiltered/valid
-  levels: /home/excellent/ds/others/boxoban-levels/unfiltered/valid/000.txt
+  levels: /home/excellent/ds/others/boxoban-levels/unfiltered/valid
+  # levels: /home/excellent/ds/others/boxoban-levels/unfiltered/valid/000.txt
+
 infra:
   sub_processes_cnt: 1
   threads_cnt: 10
   device: gpu
   log: mem
+
 evaluate:
-  n_games_to_solve: 100
+  n_games_to_solve: 1000
   mem_max_episodes: 100000
-  towards_or_away: 'towards'   # towards|away|both
-  policy_name: 'last'
-  targets: all_possible
+  towards_or_away: 'towards'    # towards|away|both
+  policies: 'last'             # last|all|pl0|pl1|...
+  targets: all                # all|random
   method: one_shot
 
 model:

@@ -6,7 +6,7 @@ env:
   n_max_episode_steps: 200
   levels: src/environments/sokoban/levels/gen_8x8_1000_levels__sol_10.txt
   maxsize: 8,8
-  randomize: true
+  randomize: true  # randomly rotate and shift level
 
   #### Download levels from: https://github.com/google-deepmind/boxoban-levels
   # name: boxoban
@@ -17,20 +17,8 @@ env:
   # # levels: /home/excellent/ds/others/boxoban-levels/unfiltered/valid
   # # levels: /home/excellent/ds/others/boxoban-levels/unfiltered/test
   # # levels: /home/excellent/ds/others/boxoban-levels/unfiltered/valid
-  # levels: /home/excellent/ds/others/boxoban-levels/unfiltered/valid/000.txt
+  # # levels: /home/excellent/ds/others/boxoban-levels/unfiltered/valid/000.txt
 
 infra:
   device: gpu
   log: mem
-model:
-  PLTA:
-    class: Sokoban_PLTA_v4_1010
-    learning_rate: 0.003
-    weight_decay: 0
-    batch_size: 128
-  PLHW:
-    class: Sokoban_PLHW_v4_1010
-    learning_rate: 0.003
-    weight_decay: 0
-    batch_size: 128
-  checkpoint: 'trained_models/boxoban_vast_v4_20250421-073320__repacked.ckpt' 

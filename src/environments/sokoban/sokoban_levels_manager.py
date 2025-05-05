@@ -1,6 +1,7 @@
 import os
 from typing import Optional
 import base64
+from numba import jit
 
 import numpy as np
 from environments import env_base
@@ -81,6 +82,7 @@ def create_board_lines(board_np: np.ndarray) -> list[str]:
     return res
 
 
+@jit(nopython=True)
 def board_3d_to_2d(board: np.ndarray) -> np.ndarray:
     assert len(board.shape) == 3
     res = np.zeros((board.shape[1], board.shape[2]), dtype=board.dtype)
@@ -91,6 +93,7 @@ def board_3d_to_2d(board: np.ndarray) -> np.ndarray:
     return res
 
 
+@jit(nopython=True)
 def board_2d_to_3d(board: np.ndarray) -> np.ndarray:
     assert len(board.shape) == 2
     res = np.zeros((4, *board.shape), dtype=board.dtype)
@@ -99,6 +102,7 @@ def board_2d_to_3d(board: np.ndarray) -> np.ndarray:
     return res
 
 
+@jit(nopython=False)
 def split_to_level_boards(level_filepath: str, all_boards: np.ndarray):
     assert len(all_boards.shape) == 3
     for player_row, player_col in zip(*np.where(all_boards[sokoban_env.CHANNEL_PLAYER, :, :] > 0)):
@@ -111,11 +115,11 @@ def split_to_level_boards(level_filepath: str, all_boards: np.ndarray):
             for dr, dc in sokoban_env.DIRECTIONS:
                 nr, nc = row + dr, col + dc
                 if not (0 <= nr < all_boards.shape[1] and 0 <= nc < all_boards.shape[2]):
-                    helpers.print_encoding("Incorrect board surrounding", all_boards[:, max(0, row - 5) : min(all_boards.shape[1], row + 5), :10])
+                    # helpers.print_encoding("Incorrect board surrounding", all_boards[:, max(0, row - 5) : min(all_boards.shape[1], row + 5), :10])
                     raise Exception(f"Filename `{level_filepath}` is incorrect, expected all levels to be surrounded by walls")
                 if all_boards[sokoban_env.CHANNEL_WALL, nr, nc] == 0 and (nr, nc) not in vis:
                     vis.add((nr, nc))
-                    queue.append([nr, nc])
+                    queue.append((nr, nc))
             qi += 1
 
         queue = np.array(queue)
@@ -124,6 +128,7 @@ def split_to_level_boards(level_filepath: str, all_boards: np.ndarray):
         yield board
 
 
+@jit(nopython=True)
 def load_levels_from_lines(lines: list[str]) -> np.ndarray:
     # symbols:
     #   Wall	#
@@ -133,7 +138,11 @@ def load_levels_from_lines(lines: list[str]) -> np.ndarray:
     #   Box on goal square	*
     #   Goal square	.
     #   Floor	(Space)
-    n, m = len(lines), max(len(line) for line in lines)
+    n = len(lines)
+    m = 0
+    for line in lines:
+        m = max(m, len(line))
+
     all_boards = np.zeros((4, n, m), dtype=np.int32)
     for r, line in enumerate(lines):
         for c, sym in enumerate(line):

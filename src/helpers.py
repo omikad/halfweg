@@ -1,8 +1,12 @@
 from collections import Counter, defaultdict
+import resource
+import time
 import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
+
+#################### Logging
 
 class TensorboardSummaryWriter(SummaryWriter):
     """
@@ -35,6 +39,24 @@ class MemorySummaryWriter:
         pass
 
 
+#################### Pytorch
+
+# https://discuss.pytorch.org/t/moving-optimizer-from-cpu-to-gpu/96068/2
+def optimizer_to(optim, device):
+    for param in optim.state.values():
+        # Not sure there are any global tensors in the state dict
+        if isinstance(param, torch.Tensor):
+            param.data = param.data.to(device)
+            if param._grad is not None:
+                param._grad.data = param._grad.data.to(device)
+        elif isinstance(param, dict):
+            for subparam in param.values():
+                if isinstance(subparam, torch.Tensor):
+                    subparam.data = subparam.data.to(device)
+                    if subparam._grad is not None:
+                        subparam._grad.data = subparam._grad.data.to(device)
+
+
 # Got from https://github.com/geochri/AlphaZero_Chess/blob/master/src/alpha_net.py
 class ResBlock(torch.nn.Module):
     def __init__(self, planes, stride=1):
@@ -55,7 +77,9 @@ class ResBlock(torch.nn.Module):
         out += residual
         out = torch.nn.functional.relu(out)
         return out
-    
+
+
+#################### Debug print
 
 def print_tabs_content(print_tabs: list[list[str]]):
     print_tab_sizes = [max([len(line) for line in tab] + [0]) for tab in print_tabs]
@@ -93,3 +117,64 @@ def print_encoding(name: str, inp: np.ndarray):
 
     else:
         print(inp)
+
+
+
+#################### Measure footprint
+
+def get_mem_size():
+    usage=resource.getrusage(resource.RUSAGE_SELF)
+    return usage[2]
+
+
+class UsageCounter:
+    """
+    Measure time/memory between calls
+    """
+    def __init__(self):
+        self.names = []
+        self.times = []
+        self.mems = []
+        self.checkpoint("")
+
+    def checkpoint(self, name):
+        self.names.append(name)
+        self.times.append(time.time())
+        self.mems.append(get_mem_size())
+
+    def print_stats(self):
+        checkpoint_times = defaultdict(list)
+        checkpoint_mems = defaultdict(list)
+
+        for i in range(1, len(self.names)):
+            name = self.names[i]
+            timedelta = self.times[i] - self.times[i - 1]
+            memdelta = self.mems[i] - self.mems[i - 1]
+
+            checkpoint_times[name].append(timedelta)
+            checkpoint_mems[name].append(memdelta)
+
+        def __r(x):
+            return round(x, 5)
+
+        print_tabs = [[] for _ in range(4)]
+        for name in checkpoint_times:
+            times, mems = checkpoint_times[name], checkpoint_mems[name]
+
+            if len(times) == 1:
+                print_tabs[0].append(name)
+                print_tabs[1].append(f"{__r(np.sum(times)):>10} sec")
+                print_tabs[2].append(f"{__r(np.sum(mems)):>10} kb")
+
+            else:
+                print_tabs[0].append(f"{name} time spent")
+                print_tabs[1].append(f"{__r(np.sum(times)):>10} sec")
+                print_tabs[2].append('')
+                print_tabs[3].append(f"Hits {len(times)}; mean {__r(np.mean(times))}; min std max = {__r(np.min(times))} {__r(np.std(times))} {__r(np.max(times))}")
+
+                print_tabs[0].append(f"{name} mem alloc")
+                print_tabs[1].append('')
+                print_tabs[2].append(f"{__r(np.sum(mems)):>10} kb")
+                print_tabs[3].append(f"Hits {len(mems)}; mean {__r(np.mean(mems))}; min std max = {__r(np.min(mems))} {__r(np.std(mems))} {__r(np.max(mems))}")
+
+        print_tabs_content(print_tabs)

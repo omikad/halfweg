@@ -14,6 +14,40 @@ This mirrors how humans plan. For example, if we want to fly to Tokyo, we first 
 
 To see train / evaluation scripts please go to [src folder](src/)
 
+Usage:
+
+### Interactive play
+
+This command is to test environment in terminal using ASCII graphic. See [example config](configs/interactive_play_sokoban.yaml)
+
+`python src/go_halfweg.py configs/interactive_play_sokoban.yaml`
+
+## Evaluate
+
+To evaluate your trained model use configuration file similar to [example config](configs/evaluate_boxoban_solve.yaml)
+
+This repository has pretrained model for boxoban, which you can evaluate on the boxoban dataset:
+
+* Download boxoban levels: https://github.com/google-deepmind/boxoban-levels
+
+* Edit [configs/evaluate_boxoban_solve.yaml](configs/evaluate_boxoban_solve.yaml) config file with the boxoban levels path
+
+* Run command `python src/go_halfweg.py configs/evaluate_boxoban_solve.yaml`
+
+This command takes about 2 minutes and show performance on the trained model on the boxoban valid dataset:
+```
+{
+    'method': 'one_shot',                           # one_shot indicates recursion hierarchy is called once for each target
+    'towards_or_away': True,                        # model plans to decrease distance to the target
+    'policy': 'Policy5 (layer_idx=6)',              # which policy is used (policies are 0,1,2,3,4,5)
+    'solved_mean': 0.608,                           # percentage of puzzles solved
+    'mse_mean': 5.035117540360746,                  # mean squared difference between actual final state (after applying actions) and target state
+    'games_cnt': 1000,                              # number of puzzles to solve
+    'proposed_plan_length_mean': 95.6372529268238,  # model returned this plan length in average
+    'solved_plan_length_mean': 100.56907894736842   # when puzzle is solved, this number of steps were in the plan in average
+}
+```
+
 ## Showcase
 
 Let's demonstrate this using the [Sokoban](https://en.wikipedia.org/wiki/Sokoban) game:

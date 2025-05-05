@@ -1,9 +1,10 @@
 import pprint
 import sys
+import numpy as np
 import torch
 import yaml
 
-import evaluate
+import hw_impl.evaluate as evaluate
 import helpers
 import interactive_player
 
@@ -34,9 +35,17 @@ def main():
     pprint.pprint(config)
 
     if config['cmd'] == 'evaluate':
-        evaluate.go_evaluate(config, tensorboard, device)
+        evaluate.go_evaluate(config, device)
     elif config['cmd'] == 'interactive_play':
         interactive_player.go_interactive_play(config)
+
+    if isinstance(tensorboard, helpers.MemorySummaryWriter):
+        for key, val in tensorboard.points.items():
+            m0 = np.min(val) if len(val) > 0 else '-'
+            m1 = np.mean(val) if len(val) > 0 else '-'
+            m2 = np.max(val) if len(val) > 0 else '-'
+            l = val[-1] if len(val) > 0 else '-'
+            print(f"Memory tensorboard: `{key}` has {len(val)} points (min, mean, max, last) = {m0, m1, m2, l}")
 
 if __name__ == "__main__":
     main()

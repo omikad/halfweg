@@ -2,6 +2,7 @@ import os
 import time
 import torch
 
+import environments
 import helpers
 
 
